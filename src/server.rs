@@ -1,5 +1,5 @@
 use std::{
-    io::Read,
+    io::{Read, Write},
     net::{TcpListener, TcpStream},
 };
 
@@ -23,8 +23,9 @@ fn handle_client_connection(mut stream: TcpStream) -> Result<(), &'static str> {
     };
 
     if !is_valid_http_request(&buf) {
-        // FIXME: Write this to stream
-        eprintln!("ERROR: Invalid HTTP request!");
+        stream
+            .write(b"ERROR: Invalid HTTP request!\n")
+            .expect("Failed to write to stream.");
     }
 
     Ok(())
