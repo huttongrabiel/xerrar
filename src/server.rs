@@ -46,6 +46,7 @@ fn is_valid_http_request(buf: &[u8; 1024]) -> bool {
     {
         // FIXME: Write this to stream.
         eprintln!("Invalid HTTP request");
+        return false;
     }
 
     eprintln!("{}", request_content);
