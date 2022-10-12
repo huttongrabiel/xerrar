@@ -35,6 +35,8 @@ fn handle_client_connection(mut stream: TcpStream) -> Result<(), &'static str> {
             .expect("Failed to write to stream.");
     }
 
+    let request_endpoint = request_endpoint(http_request_header)?;
+
     Ok(())
 }
 
@@ -52,4 +54,19 @@ fn is_valid_http_request(http_request_header: &str) -> bool {
     eprintln!("{}", http_request_header);
 
     true
+}
+
+fn request_endpoint(http_request_header: &str) -> Result<&str, &'static str> {
+    let mut split_http_header = http_request_header.split_whitespace();
+    split_http_header.next().unwrap();
+    let endpoint = split_http_header
+        .next()
+        .expect("Split HTTP request failed.");
+
+    // Endpoints come in as /<endpoint>, remove the '/'
+    let endpoint = endpoint.trim_start_matches("/");
+
+    eprintln!("endpoint: {}", endpoint);
+
+    Ok(endpoint)
 }
