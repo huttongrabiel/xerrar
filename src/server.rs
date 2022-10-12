@@ -29,9 +29,9 @@ fn handle_client_connection(mut stream: TcpStream) -> Result<(), &'static str> {
         .next()
         .expect("Failed to get iterator over lines.");
 
-    if !is_valid_http_request(&http_request_header) {
+    if !is_valid_http_request(http_request_header) {
         stream
-            .write(b"ERROR: Invalid HTTP request!\n")
+            .write_all(b"ERROR: Invalid HTTP request!\n")
             .expect("Failed to write to stream.");
     }
 
@@ -64,7 +64,7 @@ fn request_endpoint(http_request_header: &str) -> Result<&str, &'static str> {
         .expect("Split HTTP request failed.");
 
     // Endpoints come in as /<endpoint>, remove the '/'
-    let endpoint = endpoint.trim_start_matches("/");
+    let endpoint = endpoint.trim_start_matches('/');
 
     eprintln!("endpoint: {}", endpoint);
 
