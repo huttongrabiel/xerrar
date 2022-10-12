@@ -22,7 +22,14 @@ fn handle_client_connection(mut stream: TcpStream) -> Result<(), &'static str> {
         Err(_) => return Err("Failed to stream into byte buffer"),
     };
 
-    if !is_valid_http_request(&buf) {
+    let http_request = String::from_utf8_lossy(&buf);
+    // <REQUEST TYPE> <URI> HTTP/1.1
+    let http_request_header = http_request
+        .lines()
+        .next()
+        .expect("Failed to get iterator over lines.");
+
+    if !is_valid_http_request(&http_request_header) {
         stream
             .write(b"ERROR: Invalid HTTP request!\n")
             .expect("Failed to write to stream.");
@@ -31,15 +38,7 @@ fn handle_client_connection(mut stream: TcpStream) -> Result<(), &'static str> {
     Ok(())
 }
 
-fn is_valid_http_request(buf: &[u8; 1024]) -> bool {
-    let request_content = String::from_utf8_lossy(buf);
-
-    // <REQUEST TYPE> <URI> HTTP/1.1
-    let http_request_header = request_content
-        .lines()
-        .next()
-        .expect("Failed to get iterator over lines.");
-
+fn is_valid_http_request(http_request_header: &str) -> bool {
     // Only accept GET and PUT requests to the server, that is all that people
     // should need to do with an IRC chat.
     if !http_request_header.ends_with("HTTP/1.1")
@@ -50,7 +49,7 @@ fn is_valid_http_request(buf: &[u8; 1024]) -> bool {
         return false;
     }
 
-    eprintln!("{}", request_content);
+    eprintln!("{}", http_request_header);
 
     true
 }
