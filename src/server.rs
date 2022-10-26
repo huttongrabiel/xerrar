@@ -23,6 +23,10 @@ fn handle_client_connection(mut stream: TcpStream) -> Result<(), &'static str> {
     };
 
     let http_request = String::from_utf8_lossy(&buf);
+
+    // TODO: Remove this once we can parse out the correct information.
+    eprintln!("=========\nhttp_request: {}\n========", http_request);
+
     // <REQUEST TYPE> <URI> HTTP/1.1
     let http_request_header = http_request
         .lines()
@@ -36,6 +40,21 @@ fn handle_client_connection(mut stream: TcpStream) -> Result<(), &'static str> {
     }
 
     let request_endpoint = request_endpoint(http_request_header)?;
+    let request_body = request_body(&http_request);
+
+    // FIXME: Write a properly formatted HTTP request out to the stream.
+    //    let response = format!(
+    //        "{}\r\nContent-Length: {}\r\n\r\n{}",
+    //        status_line,
+    //        body.len(),
+    //        body
+    //    );
+    stream
+        .write_fmt(format_args!(
+            "HTTP/1.1 200 OK Connecting to Endpoint: {}",
+            request_endpoint
+        ))
+        .unwrap();
 
     Ok(())
 }
@@ -69,4 +88,13 @@ fn request_endpoint(http_request_header: &str) -> Result<&str, &'static str> {
     eprintln!("endpoint: {}", endpoint);
 
     Ok(endpoint)
+}
+
+fn request_body(http_request: &str) -> Result<&str, &'static str> {
+    // FIXME: If the message spans multiple lines this only returns the last line.
+    // So no multi line messages.
+    let request_body = http_request.lines().last().unwrap();
+    assert!(!request_body.contains('\n'));
+
+    Ok("fine")
 }
