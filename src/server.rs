@@ -7,8 +7,10 @@ pub fn start_server() -> Result<(), &'static str> {
     let listener = TcpListener::bind("127.0.0.1:8080").unwrap();
 
     for stream in listener.incoming() {
-        // FIXME: Handle error type of stream correctly
-        handle_client_connection(stream.unwrap())?;
+        match handle_client_connection(stream.unwrap()) {
+            Ok(_) => (),
+            Err(e) => return Err(e),
+        };
     }
 
     Ok(())
