@@ -24,10 +24,19 @@ fn handle_client_connection(mut stream: TcpStream) -> Result<(), &'static str> {
         Err(_) => return Err("Failed to stream into byte buffer"),
     };
 
-    let http_request = String::from_utf8_lossy(&buf);
+    // FIXME: This should really be exported to its own function but it is a
+    // pain to do it without doing it really slowly. Easy to just create vectors
+    // and buffers all over but we don't want that.
+    let mut count = 0;
+    for byte in buf.into_iter().rev() {
+        if byte != 0 {
+            break;
+        }
+        count += 1;
+    }
+    let buf = &buf[0..buf.len() - count];
 
-    // TODO: Remove this once we can parse out the correct information.
-    eprintln!("=========\nhttp_request: {}\n========", http_request);
+    let http_request = String::from_utf8_lossy(&buf);
 
     // <REQUEST TYPE> <URI> HTTP/1.1
     let http_request_header = http_request
@@ -41,23 +50,22 @@ fn handle_client_connection(mut stream: TcpStream) -> Result<(), &'static str> {
             .expect("Failed to write to stream.");
     }
 
-    let request_endpoint = request_endpoint(http_request_header)?;
-    let request_body = request_body(&http_request);
+    let request_endpoint = request_endpoint(&http_request_header)?;
+    let request_body = request_body(&http_request)?;
+    let request_body = request_body.trim();
 
-    // FIXME: Write a properly formatted HTTP request out to the stream.
-    //    let response = format!(
-    //        "{}\r\nContent-Length: {}\r\n\r\n{}",
-    //        status_line,
-    //        body.len(),
-    //        body
-    //    );
+    let response = format!(
+        "{}\r\nContent-Length: {}\r\n\r\n{}",
+        "HTTP/1.1 200 OK",
+        request_body.len(),
+        request_body
+    );
 
-    stream
-        .write_fmt(format_args!(
-            "HTTP/1.1 200 OK Connecting to Endpoint: {}",
-            request_endpoint
-        ))
-        .unwrap();
+    match stream.write(response.as_bytes()) {
+        Ok(_) => (),
+        Err(_) => return Err("Failed to write to stream. Try again."),
+    };
+    stream.flush().expect("Failed to flush stream.");
 
     Ok(())
 }
@@ -73,8 +81,6 @@ fn is_valid_http_request(http_request_header: &str) -> bool {
         return false;
     }
 
-    eprintln!("{}", http_request_header);
-
     true
 }
 
@@ -88,16 +94,16 @@ fn request_endpoint(http_request_header: &str) -> Result<&str, &'static str> {
     // Endpoints come in as /<endpoint>, remove the '/'
     let endpoint = endpoint.trim_start_matches('/');
 
-    eprintln!("endpoint: {}", endpoint);
-
     Ok(endpoint)
 }
 
-fn request_body(http_request: &str) -> Result<&str, &'static str> {
-    // FIXME: If the message spans multiple lines this only returns the last line.
-    // So no multi line messages.
-    let request_body = http_request.lines().last().unwrap();
-    assert!(!request_body.contains('\n'));
+fn request_body(http_request: &str) -> Result<String, &'static str> {
+    let request_body = match http_request.split('\n').last() {
+        Some(body) => body,
+        None => return Err("Failed to parse body from request."),
+    };
+
+    let request_body = request_body.trim().to_string();
 
     Ok(request_body)
 }
