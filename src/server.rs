@@ -51,6 +51,7 @@ fn handle_client_connection(mut stream: TcpStream) -> Result<(), &'static str> {
     //        body.len(),
     //        body
     //    );
+
     stream
         .write_fmt(format_args!(
             "HTTP/1.1 200 OK Connecting to Endpoint: {}",
@@ -98,5 +99,5 @@ fn request_body(http_request: &str) -> Result<&str, &'static str> {
     let request_body = http_request.lines().last().unwrap();
     assert!(!request_body.contains('\n'));
 
-    Ok("fine")
+    Ok(request_body)
 }
