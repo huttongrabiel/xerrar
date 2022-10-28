@@ -107,3 +107,29 @@ fn request_body(http_request: &str) -> Result<String, &'static str> {
 
     Ok(request_body)
 }
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    pub const REQUEST_HEADER: &str = "PUT /systems HTTP/1.1";
+    pub const HTTP_REQUEST: &str = "\
+PUT /test HTTP/1.1
+Host: localhost:8080
+User-Agent: curl/7.81.0
+Accept: */*
+Content-Length: 4
+Content-Type: application/x-www-form-urlencoded
+
+test";
+
+    #[test]
+    fn test_request_endpoint() {
+        assert_eq!(request_endpoint(REQUEST_HEADER).unwrap(), "systems");
+    }
+
+    #[test]
+    fn test_request_body() {
+        assert_eq!(request_body(HTTP_REQUEST).unwrap(), "test");
+    }
+}
