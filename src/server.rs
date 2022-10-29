@@ -17,7 +17,6 @@ pub fn start_server() -> Result<(), &'static str> {
 }
 
 fn handle_client_connection(mut stream: TcpStream) -> Result<(), &'static str> {
-    // stream must be mut so that we can write back out to it.
     let mut buf = [0; 1024];
     match stream.read(&mut buf) {
         Ok(_) => (),
