@@ -1,22 +1,66 @@
+use crate::thread::ThreadPool;
 use std::{
     io::{Read, Write},
     net::{TcpListener, TcpStream},
 };
 
+const THREAD_COUNT: usize = 6;
+
+struct IRCChatPacket {
+    http_response: String,
+    request_body: String,
+    request_endpoint: String,
+    username: String,
+    // time_monotonic: idk how to do time in Rust
+}
+
+impl IRCChatPacket {
+    pub fn new(
+        http_response: String,
+        request_body: String,
+        request_endpoint: String,
+        username: String,
+    ) -> Self {
+        Self {
+            http_response,
+            request_body,
+            request_endpoint,
+            username,
+        }
+    }
+}
+
 pub fn start_server() -> Result<(), &'static str> {
     let listener = TcpListener::bind("127.0.0.1:8080").unwrap();
 
+    let thread_pool = ThreadPool::new(THREAD_COUNT);
+
     for stream in listener.incoming() {
-        match handle_client_connection(stream.unwrap()) {
-            Ok(_) => (),
-            Err(e) => return Err(e),
-        };
+        let mut stream = stream.unwrap();
+
+        thread_pool.execute(move || {
+            // FIXME: Ideally this should never panic. handle_client_connection
+            // should return an appropriate body with the cause of error.
+            let irc_chat_packet = handle_client_connection(&mut stream).unwrap();
+
+            let response = format!(
+                "{}\r\nContent-Length: {}\r\n\r\n{}",
+                "HTTP/1.1 200 OK",
+                irc_chat_packet.request_body.len(),
+                irc_chat_packet.request_body
+            );
+
+            stream
+                .write(response.as_bytes())
+                .expect("Failed to write bytes to stream.");
+            stream.flush().expect("Failed to flush stream.");
+        });
     }
 
     Ok(())
 }
 
-fn handle_client_connection(mut stream: TcpStream) -> Result<(), &'static str> {
+fn handle_client_connection(stream: &mut TcpStream) -> Result<IRCChatPacket, &'static str> {
     let mut buf = [0; 1024];
     match stream.read(&mut buf) {
         Ok(_) => (),
@@ -53,20 +97,16 @@ fn handle_client_connection(mut stream: TcpStream) -> Result<(), &'static str> {
     let request_body = request_body(&http_request)?;
     let request_body = request_body.trim();
 
-    let response = format!(
-        "{}\r\nContent-Length: {}\r\n\r\n{}",
-        "HTTP/1.1 200 OK",
-        request_body.len(),
-        request_body
+    let http_response = "HTTP/1.1 200 OK";
+
+    let irc_chat_packet = IRCChatPacket::new(
+        http_response.to_string(),
+        request_body.to_string(),
+        request_endpoint.to_string(),
+        "test_username".to_string(),
     );
 
-    match stream.write(response.as_bytes()) {
-        Ok(_) => (),
-        Err(_) => return Err("Failed to write to stream. Try again."),
-    };
-    stream.flush().expect("Failed to flush stream.");
-
-    Ok(())
+    Ok(irc_chat_packet)
 }
 
 fn is_valid_http_request(http_request_header: &str) -> bool {
