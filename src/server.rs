@@ -79,7 +79,7 @@ fn handle_client_connection(stream: &mut TcpStream) -> Result<IRCChatPacket, &'s
     }
     let buf = &buf[0..buf.len() - count];
 
-    let http_request = String::from_utf8_lossy(&buf);
+    let http_request = String::from_utf8_lossy(buf);
 
     // <REQUEST TYPE> <URI> HTTP/1.1
     let http_request_header = http_request
@@ -93,7 +93,7 @@ fn handle_client_connection(stream: &mut TcpStream) -> Result<IRCChatPacket, &'s
             .expect("Failed to write to stream.");
     }
 
-    let request_endpoint = request_endpoint(&http_request_header)?;
+    let request_endpoint = request_endpoint(http_request_header)?;
     let request_body = request_body(&http_request)?;
     let request_body = request_body.trim();
 
