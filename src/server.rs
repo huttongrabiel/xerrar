@@ -1,4 +1,5 @@
 use crate::thread::ThreadPool;
+use chrono::{DateTime, Utc};
 use std::{
     io::{Read, Write},
     net::{TcpListener, TcpStream},
@@ -28,6 +29,14 @@ impl IRCChatPacket {
             username,
         }
     }
+
+    pub fn as_chat(&self) -> String {
+        let now_timestamp = Utc::now().time().format("%H:%M:%S");
+        format!(
+            "[{}]<{}>: {}",
+            now_timestamp, self.username, self.request_body
+        )
+    }
 }
 
 pub fn start_server() -> Result<(), &'static str> {
@@ -46,8 +55,8 @@ pub fn start_server() -> Result<(), &'static str> {
             let response = format!(
                 "{}\r\nContent-Length: {}\r\n\r\n{}",
                 "HTTP/1.1 200 OK",
-                irc_chat_packet.request_body.len(),
-                irc_chat_packet.request_body
+                irc_chat_packet.as_chat().len(),
+                irc_chat_packet.as_chat()
             );
 
             stream
