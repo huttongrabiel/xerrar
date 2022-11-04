@@ -51,7 +51,7 @@ pub fn start_server() -> Result<(), &'static str> {
             );
 
             stream
-                .write(response.as_bytes())
+                .write_all(response.as_bytes())
                 .expect("Failed to write bytes to stream.");
             stream.flush().expect("Failed to flush stream.");
         });
