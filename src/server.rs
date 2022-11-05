@@ -1,6 +1,7 @@
 use crate::thread::ThreadPool;
 use chrono::{DateTime, Utc};
 use std::{
+    fmt::Display,
     io::{Read, Write},
     net::{TcpListener, TcpStream},
 };
@@ -12,7 +13,7 @@ struct IRCChatPacket {
     request_body: String,
     request_endpoint: String,
     username: String,
-    // time_monotonic: idk how to do time in Rust
+    time: String,
 }
 
 impl IRCChatPacket {
@@ -22,19 +23,28 @@ impl IRCChatPacket {
         request_endpoint: String,
         username: String,
     ) -> Self {
+        let time = Utc::now().time().format("%H:%M:%S").to_string();
         Self {
             http_response,
             request_body,
             request_endpoint,
             username,
+            time,
         }
     }
 
-    pub fn as_chat(&self) -> String {
-        let now_timestamp = Utc::now().time().format("%H:%M:%S");
-        format!(
+    pub fn formatted_len(&self) -> usize {
+        let formatted_str = format!("{}", self);
+        formatted_str.len()
+    }
+}
+
+impl Display for IRCChatPacket {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
             "[{}]<{}>: {}",
-            now_timestamp, self.username, self.request_body
+            self.time, self.username, self.request_body
         )
     }
 }
@@ -55,8 +65,8 @@ pub fn start_server() -> Result<(), &'static str> {
             let response = format!(
                 "{}\r\nContent-Length: {}\r\n\r\n{}",
                 "HTTP/1.1 200 OK",
-                irc_chat_packet.as_chat().len(),
-                irc_chat_packet.as_chat()
+                irc_chat_packet.formatted_len(),
+                irc_chat_packet
             );
 
             stream
