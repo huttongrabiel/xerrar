@@ -64,7 +64,7 @@ pub fn start_server() -> Result<(), &'static str> {
 
             let response = format!(
                 "{}\r\nContent-Length: {}\r\n\r\n{}",
-                "HTTP/1.1 200 OK",
+                irc_chat_packet.http_response,
                 irc_chat_packet.formatted_len(),
                 irc_chat_packet
             );
