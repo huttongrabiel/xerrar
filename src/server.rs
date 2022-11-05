@@ -1,5 +1,5 @@
 use crate::thread::ThreadPool;
-use chrono::{DateTime, Utc};
+use chrono::Utc;
 use std::{
     fmt::Display,
     io::{Read, Write},
