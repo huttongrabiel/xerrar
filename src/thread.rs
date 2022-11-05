@@ -49,11 +49,12 @@ impl Worker {
             let message = rx.lock().unwrap().recv().unwrap();
 
             match message {
-                Message::NewJob(job) => job(),
+                Message::NewJob(job) => {
+                    job();
+                    eprintln!("worker {} got a job!", id);
+                }
             }
         });
-
-        eprintln!("worker {} got a job!", id);
 
         Self {
             id,
