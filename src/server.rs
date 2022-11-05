@@ -43,7 +43,7 @@ impl Display for IRCChatPacket {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(
             f,
-            "[{}]<{}>: {}",
+            "[{}]<{}>: {}\n",
             self.time, self.username, self.request_body
         )
     }
