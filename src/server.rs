@@ -129,6 +129,10 @@ fn handle_client_connection(stream: &mut TcpStream) -> Result<IRCChatPacket, &'s
 }
 
 fn is_valid_http_request(http_request_header: &str) -> bool {
+    if std::env::var("DEBUG").is_ok() {
+        eprintln!("http_request_header: {}", http_request_header);
+    }
+
     // Only accept GET and PUT requests to the server, that is all that people
     // should need to do with an IRC chat.
     if !http_request_header.ends_with("HTTP/1.1")
