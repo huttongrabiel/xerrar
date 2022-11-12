@@ -1,5 +1,5 @@
 use crate::thread::ThreadPool;
-use chrono::Local;
+use chrono::Utc;
 use std::{
     fmt::Display,
     io::{Read, Write},
@@ -23,7 +23,7 @@ impl IRCChatPacket {
         request_endpoint: String,
         username: String,
     ) -> Self {
-        let time = Local::now().time().format("%H:%M:%S").to_string();
+        let time = Utc::now().time().format("%H:%M:%S").to_string();
         Self {
             http_response,
             request_body,
